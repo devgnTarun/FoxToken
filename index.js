@@ -113,33 +113,36 @@ bot.command('timer', async (ctx) => {
 
 });
 
-// Listen for messages from a specific user (e.g., @New_User66)
 bot.on('message', async (ctx) => {
     const message = ctx.message;
     const senderUsername = message.from.username;
 
-
-    // Check if the message is from the desired user
+    // Check if the message is from the desired user (you can change it based on your needs)
     if (senderUsername === 'gempadbuybot') {
-        const text = message.text;
+        const text = message.caption;
 
         // Check if the message contains "New FOXX Presale Contribution"
         if (text && text.includes("New FOXX Presale Contribution")) {
-            // Extract the amount from the message
+            // Extract the amount bought
             const amountMatch = text.match(/Amount Bought\s*:\s*(\d+\.\d+)\s*USDT/);
 
-            // Extract the buyer address from the message's entities (3rd link)
-            const buyerEntity = message.entities?.[2]?.url;
-            const buyerAddress = buyerEntity?.match(/address\/([0-9a-fA-Fx]+)/)?.[1];
+            // Extract the buyer address and TX hash from caption entities (assuming 2nd and 3rd links)
+            const txHashEntity = message.caption_entities?.find(entity => entity.offset === 277);
+            const buyerEntity = message.caption_entities?.find(entity => entity.offset === 282);
 
-            if (amountMatch && buyerAddress) {
+            const txHash = txHashEntity?.url?.match(/tx\/([0-9a-fA-Fx]+)/)?.[1];
+            const buyerAddress = buyerEntity?.url?.match(/address\/([0-9a-fA-Fx]+)/)?.[1];
+
+            if (amountMatch && buyerAddress && txHash) {
                 const amount = parseFloat(amountMatch[1]);
 
+                // Log extracted data
+                console.log(`Extracted TX Hash: ${txHash}, Buyer Address: ${buyerAddress}, Amount: ${amount}`);
 
                 // Handle the new buy message
-                await handleNewBuyMessage(buyerAddress, amount);
+                await handleNewBuyMessage(buyerAddress, amount, txHash);
             } else {
-                console.log('Failed to extract buyer address or amount');
+                console.log('Failed to extract buyer address, TX hash, or amount');
             }
         }
     }
